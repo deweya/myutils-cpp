@@ -43,19 +43,12 @@ output processFile(options opts) {
         if (c != -1) {
             o.bytes++;
         }
-        
+
         if (c == '\n') {
             o.lines++;
-            if (word) {
-                o.words++;
-                word = false;
-            }
-        } else if (c == ' ') {
-            if (word) {
-                o.words++;
-                word = false;
-            }
-        } else if (c == -1) {
+        }
+
+        if (c == '\n' || c == ' ' || c == -1) {
             if (word) {
                 o.words++;
                 word = false;
