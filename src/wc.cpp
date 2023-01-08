@@ -55,6 +55,11 @@ output processFile(options opts) {
                 o.words++;
                 word = false;
             }
+        } else if (c == -1) {
+            if (word) {
+                o.words++;
+                word = false;
+            }
         } else {
             word = true;
         }
