@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/${fileBasenameNoExtension}",
-            "args": ["test.txt"],
+            "args": ["${workspaceFolder}/test/wc.txt"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
