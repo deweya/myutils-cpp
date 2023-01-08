@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/${fileBasenameNoExtension}",
-            "args": ["${workspaceFolder}/test/wc/shakespeare-1.txt"],
+            "args": ["${workspaceFolder}/test/wc/sonnet-1.txt"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
