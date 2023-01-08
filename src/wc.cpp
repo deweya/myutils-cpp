@@ -76,7 +76,11 @@ int main(int argc, char** argv) {
     opts.file = argv[1];
     
     output o = processFile(opts);
-    cout << o.lines << '\t' << o.words << '\t' << o.bytes << '\t' << o.file;
+    cout << setw(8) << o.lines;
+    cout << setw(8) << o.words;
+    cout << setw(8) << o.bytes;
+    cout << ' ' << o.file;
+    cout << endl;
     
     return 0;
 }
