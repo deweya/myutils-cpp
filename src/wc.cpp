@@ -2,10 +2,13 @@
 #include <fstream>
 using namespace std;
 
-const string USAGE = "wc [file]";
+const string USAGE = "wc [-c] [file]";
 
 struct options {
     string file;
+    bool bytes = false;
+    bool lines = false;
+    bool words = false;
 };
 
 struct output {
@@ -15,20 +18,39 @@ struct output {
     string file;
 };
 
-void validateInput(int argc, char** argv) {
-    // Check that file arg is passed
-    if (argc == 1) {
-        throw invalid_argument("ERR: argument <file> is required\nUsage: " + USAGE);
+options processInput(int argc, char** argv) {
+    options opts;
+
+    for (int i = 1; i < argc; i++) {
+        string s = argv[i];
+        if (s == "-c") {
+            opts.bytes = true;
+        } else if (s == "-l") {
+            opts.lines = true;
+        } else if (s == "-w") {
+            opts.words = true;
+        } else {
+            opts.file = s;
+        }
     }
-    string file = argv[1];
+    if (!opts.bytes && !opts.lines && !opts.words) {
+        opts.bytes = opts.lines = opts.words = true;
+    }
+
+    // Check that file arg is passed
+    if (opts.file == "") {
+        throw invalid_argument("ERR: not enough arguments\nUsage: " + USAGE);
+    }
 
     // Check that file exists
     ifstream ifile;
-    ifile.open(argv[1]);
+    ifile.open(opts.file);
     if (!ifile) {
-        throw invalid_argument("ERR: file " + file + " does not exist\nUsage " + USAGE);
+        throw invalid_argument("ERR: file " + opts.file + " does not exist\nUsage " + USAGE);
     }
     ifile.close();
+
+    return opts;
 }
 
 output processFile(options opts) {
@@ -62,23 +84,32 @@ output processFile(options opts) {
     return o;
 }
 
+void printResult(options opts, output o) {
+    if (opts.lines) {
+        cout << setw(8) << o.lines;
+    }
+    if (opts.words) {
+        cout << setw(8) << o.words;
+    }
+    if (opts.bytes) {
+        cout << setw(8) << o.bytes;
+    }
+    cout << ' ' << o.file;
+    cout << endl;
+}
+
 int main(int argc, char** argv) {
+    options opts;
+
     try {
-        validateInput(argc, argv);
+        opts = processInput(argc, argv);
     } catch(invalid_argument e) {
         cerr << e.what() << endl;
         return -1;
     }
-
-    options opts;
-    opts.file = argv[1];
     
     output o = processFile(opts);
-    cout << setw(8) << o.lines;
-    cout << setw(8) << o.words;
-    cout << setw(8) << o.bytes;
-    cout << ' ' << o.file;
-    cout << endl;
+    printResult(opts, o);
     
     return 0;
 }
