@@ -1,16 +1,19 @@
+#!/bin/bash
+
 TEST_DIR=test/wc
 CMDS=("wc" "wc -c" "wc -l" "wc -w")
 
 echo "[INFO] Making wc"
 make wc
 
+echo ""
+echo "==============================================================================="
+echo ""
+
+## Verify that the output is correct
 for ((i = 0; i < ${#CMDS[@]}; i++)); do
     echo "[INFO] Testing ${CMDS[i]} [file]"
     for f in ${TEST_DIR}/*; do
-        if [[ ${f} == ${TEST_DIR}/test.sh ]]; then
-            continue
-        fi
-
         expected=$(${CMDS[i]} ${f})
         actual=$(bin/${CMDS[i]} ${f})
 
