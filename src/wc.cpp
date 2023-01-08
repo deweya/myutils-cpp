@@ -4,9 +4,16 @@ using namespace std;
 
 const string USAGE = "wc [file]";
 
-struct {
+struct options {
     string file;
-} opts;
+};
+
+struct output {
+    int lines = 0;
+    int words = 0;
+    int bytes = 0;
+    string file;
+};
 
 void validateInput(int argc, char** argv) {
     // Check that file arg is passed
@@ -21,6 +28,40 @@ void validateInput(int argc, char** argv) {
     if (!ifile) {
         throw invalid_argument("ERR: file " + file + " does not exist\nUsage " + USAGE);
     }
+    ifile.close();
+}
+
+output processFile(options opts) {
+    output o;
+    o.file = opts.file;
+
+    ifstream ifile;
+    ifile.open(opts.file);
+    bool word;
+    while (ifile) {
+        char c = ifile.get();
+        if (c != -1) {
+            o.bytes++;
+        }
+        
+        if (c == '\n') {
+            o.lines++;
+            if (word) {
+                o.words++;
+                word = false;
+            }
+        } else if (c == ' ') {
+            if (word) {
+                o.words++;
+                word = false;
+            }
+        } else {
+            word = true;
+        }
+    }
+
+    ifile.close();
+    return o;
 }
 
 int main(int argc, char** argv) {
@@ -31,6 +72,11 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    options opts;
     opts.file = argv[1];
-    cout << opts.file << endl;
+    
+    output o = processFile(opts);
+    cout << o.lines << '\t' << o.words << '\t' << o.bytes << '\t' << o.file;
+    
+    return 0;
 }
