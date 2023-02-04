@@ -1,11 +1,3 @@
-/*
-    TODO:
-        * Time optimization:
-            * -c: Just return the size of the file
-            * -l: Just return newline chars (can skip the whole line except \n)
-            * If -w or no args is used, only then do we need to visit each char
-*/
-
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -61,21 +53,12 @@ options processInput(int argc, char** argv) {
     return opts;
 }
 
-output processFile(options opts) {
-    output o;
-    o.file = opts.file;
-
+void processEachByte(output& o, options opts) {
     ifstream ifile;
-    ifile.open(opts.file);
+    ifile.open(o.file);
     bool word;
     while (ifile) {
         char c = ifile.get();
-
-        if (opts.bytes) {
-            if (c != -1) {
-                o.bytes++;
-            }
-        }
 
         if (opts.lines) {
             if (c == '\n') {
@@ -96,6 +79,47 @@ output processFile(options opts) {
     }
 
     ifile.close();
+}
+
+void getTotalBytes(output& o) {
+    ifstream ifile;
+    ifile.open(o.file);
+
+    ifile.seekg(0, ios::end);
+    o.bytes = ifile.tellg();
+
+    ifile.close();
+}
+
+void getNewlineChars(output& o) {
+    ifstream ifile;
+    ifile.open(o.file);
+
+    string line;
+    while (getline(ifile, line)) {
+        o.lines++;
+        if (o.bytes == ifile.tellg()) {
+            o.lines++;
+        }
+    }
+
+    o.lines--;
+
+    ifile.close();
+}
+
+output processFile(options opts) {
+    output o;
+    o.file = opts.file;
+
+    getTotalBytes(o);
+
+    if (opts.lines && !opts.words) {
+        getNewlineChars(o);
+    } else {
+        processEachByte(o, opts);
+    }
+
     return o;
 }
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TEST_DIR=test/wc
-CMDS=("wc" "wc -c" "wc -l" "wc -w")
+CMDS=("wc" "wc -c" "wc -l" "wc -w" "wc -c -l" "wc -c -w" "wc -w -c")
 
 echo "[INFO] Making wc"
 make wc

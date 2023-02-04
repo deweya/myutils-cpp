@@ -3,7 +3,8 @@
         "stdexcept": "cpp",
         "filesystem": "cpp",
         "fstream": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "iosfwd": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }
