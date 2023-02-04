@@ -1,14 +1,15 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
 using namespace std;
 
-const string USAGE = "wc [-c | -l | -w] [file]";
+const string USAGE = "wc [-c | -l | -w] [file ...]";
 
 struct options {
-    string file;
     bool bytes = false;
     bool lines = false;
     bool words = false;
+    vector<string> files;
 };
 
 struct output {
@@ -16,6 +17,8 @@ struct output {
     int words = 0;
     int bytes = 0;
     string file;
+    bool err = false;
+    string errmsg = "";
 };
 
 options processInput(int argc, char** argv) {
@@ -30,7 +33,7 @@ options processInput(int argc, char** argv) {
         } else if (s == "-w") {
             opts.words = true;
         } else {
-            opts.file = s;
+            opts.files.push_back(s);
         }
     }
     if (!opts.bytes && !opts.lines && !opts.words) {
@@ -38,17 +41,9 @@ options processInput(int argc, char** argv) {
     }
 
     // Check that file arg is passed
-    if (opts.file == "") {
+    if (opts.files.size() == 0) {
         throw invalid_argument("ERR: not enough arguments\nUsage: " + USAGE);
     }
-
-    // Check that file exists
-    ifstream ifile;
-    ifile.open(opts.file);
-    if (!ifile) {
-        throw invalid_argument("ERR: file " + opts.file + " does not exist\nUsage " + USAGE);
-    }
-    ifile.close();
 
     return opts;
 }
@@ -108,9 +103,25 @@ void getNewlineChars(output& o) {
     ifile.close();
 }
 
-output processFile(options opts) {
+bool fileExists(string file) {
+    ifstream ifile;
+    ifile.open(file);
+    if (!ifile) {
+        return false;
+    }
+
+    return true;
+}
+
+output processFile(options opts, string file) {
     output o;
-    o.file = opts.file;
+    o.file = file;
+
+    if (!fileExists(file)) {
+        o.err = true;
+        o.errmsg = "wc: " + file + ": open: No such file or directory";
+        return o;
+    }
 
     getTotalBytes(o);
 
@@ -123,32 +134,57 @@ output processFile(options opts) {
     return o;
 }
 
-void printResult(options opts, output o) {
-    if (opts.lines) {
-        cout << setw(8) << o.lines;
+void printResult(options opts, vector<output> outputs) {
+    for (int i = 0; i < outputs.size(); i++) {
+        output o = outputs[i];
+
+        if (o.err) {
+            cout << o.errmsg << endl;
+            continue;
+        }
+
+        if (opts.lines) {
+            cout << setw(8) << o.lines;
+        }
+        if (opts.words) {
+            cout << setw(8) << o.words;
+        }
+        if (opts.bytes) {
+            cout << setw(8) << o.bytes;
+        }
+        cout << ' ' << o.file;
+        cout << endl;
     }
-    if (opts.words) {
-        cout << setw(8) << o.words;
-    }
-    if (opts.bytes) {
-        cout << setw(8) << o.bytes;
-    }
-    cout << ' ' << o.file;
-    cout << endl;
 }
 
 int main(int argc, char** argv) {
-    options opts;
+    options opts = processInput(argc, argv);
+    vector<output> outputs;
 
-    try {
-        opts = processInput(argc, argv);
-    } catch(invalid_argument e) {
-        cerr << e.what() << endl;
-        return -1;
+    int totBytes = 0;
+    int totLines = 0;
+    int totWords = 0;
+    for (int i = 0; i < opts.files.size(); i++) {
+        string file = opts.files[i];
+        output o = processFile(opts, file);
+        outputs.push_back(o);
+
+        totBytes += o.bytes;
+        totLines += o.lines;
+        totWords += o.words;
     }
-    
-    output o = processFile(opts);
-    printResult(opts, o);
+
+    if (opts.files.size() > 1) {
+        output tot;
+        tot.bytes = totBytes;
+        tot.lines = totLines;
+        tot.words = totWords;
+        tot.file = "total";
+
+        outputs.push_back(tot);
+    }
+
+    printResult(opts, outputs);
     
     return 0;
 }

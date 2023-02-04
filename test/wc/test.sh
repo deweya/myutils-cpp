@@ -10,7 +10,7 @@ echo ""
 echo "==============================================================================="
 echo ""
 
-## Verify that the output is correct
+## Use a single file as an argument
 for ((i = 0; i < ${#CMDS[@]}; i++)); do
     echo "[INFO] Testing ${CMDS[i]} [file]"
     for f in ${TEST_DIR}/*; do
@@ -24,5 +24,24 @@ for ((i = 0; i < ${#CMDS[@]}; i++)); do
             echo "      expected: ${expected}"
             echo "      actual: ${actual}"
         fi
+    done
+done
+
+## Use multiple files as an argument
+for ((i = 0; i < ${#CMDS[@]}; i++)); do
+    echo "[INFO] Testing ${CMDS[i]} [file ...]"
+    for f in ${TEST_DIR}/*; do
+        for g in ${TEST_DIR}/*; do
+            expected=$(${CMDS[i]} ${f} ${g})
+            actual=$(bin/${CMDS[i]} ${f} ${g})
+
+            if [[ ${expected} == ${actual} ]]; then
+                echo "  ${f}, ${g}: PASS!"
+            else
+                echo "  ${f}, ${g}: FAIL!"
+                echo "      expected: ${expected}"
+                echo "      actual: ${actual}"
+            fi
+        done
     done
 done
