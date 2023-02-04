@@ -2,7 +2,7 @@
 #include <fstream>
 using namespace std;
 
-const string USAGE = "wc [-c] [file]";
+const string USAGE = "wc [-c | -l | -w] [file]";
 
 struct options {
     string file;
