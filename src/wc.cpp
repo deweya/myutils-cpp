@@ -1,3 +1,11 @@
+/*
+    TODO:
+        * Time optimization:
+            * -c: Just return the size of the file
+            * -l: Just return newline chars (can skip the whole line except \n)
+            * If -w or no args is used, only then do we need to visit each char
+*/
+
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -62,21 +70,28 @@ output processFile(options opts) {
     bool word;
     while (ifile) {
         char c = ifile.get();
-        if (c != -1) {
-            o.bytes++;
-        }
 
-        if (c == '\n') {
-            o.lines++;
-        }
-
-        if (c == '\n' || c == ' ' || c == -1) {
-            if (word) {
-                o.words++;
-                word = false;
+        if (opts.bytes) {
+            if (c != -1) {
+                o.bytes++;
             }
-        } else {
-            word = true;
+        }
+
+        if (opts.lines) {
+            if (c == '\n') {
+                o.lines++;
+            }
+        }
+
+        if (opts.words) {
+            if (c == '\n' || c == ' ' || c == -1) {
+                if (word) {
+                    o.words++;
+                    word = false;
+                }
+            } else {
+                word = true;
+            }
         }
     }
 
