@@ -100,16 +100,6 @@ void getNewlineChars(output& o, istream& is) {
     o.lines--;
 }
 
-bool fileExists(string file) {
-    ifstream ifile;
-    ifile.open(file);
-    if (!ifile) {
-        return false;
-    }
-
-    return true;
-}
-
 void getCounts(output& o, options opts, istream& is) {
     getTotalBytes(o, is);
 
