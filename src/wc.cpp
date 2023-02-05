@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 using namespace std;
 
 const string USAGE = "wc [-c | -l | -w] [file ...]";
@@ -9,7 +10,8 @@ struct options {
     bool bytes = false;
     bool lines = false;
     bool words = false;
-    vector<string> files;
+    vector<string> inputs;
+    bool useStdin = false;
 };
 
 struct output {
@@ -33,27 +35,32 @@ options processInput(int argc, char** argv) {
         } else if (s == "-w") {
             opts.words = true;
         } else {
-            opts.files.push_back(s);
+            opts.inputs.push_back(s);
         }
     }
     if (!opts.bytes && !opts.lines && !opts.words) {
         opts.bytes = opts.lines = opts.words = true;
     }
 
-    // Check that file arg is passed
-    if (opts.files.size() == 0) {
-        throw invalid_argument("ERR: not enough arguments\nUsage: " + USAGE);
+    // Read from stdin if the user didn't pass any files
+    if (opts.inputs.size() == 0) {
+        opts.useStdin = true;
+
+        string line;
+        string tmp = "";
+        while (getline(cin, line)) {
+            tmp += line + "\n";
+        }
+        opts.inputs.push_back(tmp);
     }
 
     return opts;
 }
 
-void processEachByte(output& o, options opts) {
-    ifstream ifile;
-    ifile.open(o.file);
+void processEachByte(output& o, options opts, istream& is) {
     bool word;
-    while (ifile) {
-        char c = ifile.get();
+    while (is) {
+        char c = is.get();
 
         if (opts.lines) {
             if (c == '\n') {
@@ -72,35 +79,25 @@ void processEachByte(output& o, options opts) {
             }
         }
     }
-
-    ifile.close();
 }
 
-void getTotalBytes(output& o) {
-    ifstream ifile;
-    ifile.open(o.file);
+void getTotalBytes(output& o, istream& is) {
+    is.seekg(0, is.end);
+    o.bytes = is.tellg();
 
-    ifile.seekg(0, ios::end);
-    o.bytes = ifile.tellg();
-
-    ifile.close();
+    is.seekg(0, is.beg);
 }
 
-void getNewlineChars(output& o) {
-    ifstream ifile;
-    ifile.open(o.file);
-
+void getNewlineChars(output& o, istream& is) {
     string line;
-    while (getline(ifile, line)) {
+    while (getline(is, line)) {
         o.lines++;
-        if (o.bytes == ifile.tellg()) {
+        if (o.bytes == is.tellg()) {
             o.lines++;
         }
     }
 
     o.lines--;
-
-    ifile.close();
 }
 
 bool fileExists(string file) {
@@ -113,22 +110,38 @@ bool fileExists(string file) {
     return true;
 }
 
-output processFile(options opts, string file) {
-    output o;
-    o.file = file;
-
-    if (!fileExists(file)) {
-        o.err = true;
-        o.errmsg = "wc: " + file + ": open: No such file or directory";
-        return o;
-    }
-
-    getTotalBytes(o);
+void getCounts(output& o, options opts, istream& is) {
+    getTotalBytes(o, is);
 
     if (opts.lines && !opts.words) {
-        getNewlineChars(o);
+        getNewlineChars(o, is);
     } else {
-        processEachByte(o, opts);
+        processEachByte(o, opts, is);
+    }
+}
+
+output processStream(options opts, string s) {
+    output o;
+
+    if (opts.useStdin) {
+        stringbuf buf(s);
+        istream is(&buf);
+        getCounts(o, opts, is);
+    } else {
+        o.file = s;
+
+        filebuf buf;
+        if (!buf.open(s, ios::in)) {
+            o.err = true;
+            o.errmsg = "wc: " + s + ": open: No such file or directory";
+            buf.close();
+            return o;
+        }
+
+        istream is(&buf);
+        getCounts(o, opts, is);
+
+        buf.close();
     }
 
     return o;
@@ -164,9 +177,9 @@ int main(int argc, char** argv) {
     int totBytes = 0;
     int totLines = 0;
     int totWords = 0;
-    for (int i = 0; i < opts.files.size(); i++) {
-        string file = opts.files[i];
-        output o = processFile(opts, file);
+    for (int i = 0; i < opts.inputs.size(); i++) {
+        string s = opts.inputs[i];
+        output o = processStream(opts, s);
         outputs.push_back(o);
 
         totBytes += o.bytes;
@@ -174,7 +187,7 @@ int main(int argc, char** argv) {
         totWords += o.words;
     }
 
-    if (opts.files.size() > 1) {
+    if (opts.inputs.size() > 1) {
         output tot;
         tot.bytes = totBytes;
         tot.lines = totLines;
