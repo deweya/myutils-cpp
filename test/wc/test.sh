@@ -45,3 +45,31 @@ for ((i = 0; i < ${#CMDS[@]}; i++)); do
         done
     done
 done
+
+## Test stdin
+echo "[INFO] Testing stdin"
+actual=$(cat <<EOF | ./bin/wc
+Never gonna give you up
+Never gonna let you down
+Never gonna run around and desert you
+Never gonna make you cry
+Never gonna say goodbye
+Never gonna tell a lie and hurt you
+EOF
+)
+expected=$(cat <<EOF | wc
+Never gonna give you up
+Never gonna let you down
+Never gonna run around and desert you
+Never gonna make you cry
+Never gonna say goodbye
+Never gonna tell a lie and hurt you
+EOF
+)
+if [[ ${expected} == ${actual} ]]; then
+    echo "  Stdin: PASS!"
+else
+    echo "  Stdin: FAIL!"
+    echo "      expected: ${expected}"
+    echo "      actual: ${actual}"
+fi

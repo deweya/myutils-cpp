@@ -155,7 +155,11 @@ void printResult(options opts, vector<output> outputs) {
         if (opts.bytes) {
             cout << setw(8) << o.bytes;
         }
-        cout << ' ' << o.file;
+        
+        if (!opts.useStdin) {
+            cout << ' ' << o.file;
+        }
+        
         cout << endl;
     }
 }
